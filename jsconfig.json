@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "ES6",
+        "paths": {
+            "socket.io-client": [
+                "/static/dependencies/socket.io.esm.min.js"
+            ],
+            "zyX": [
+                "https://zyx.wumbl3.xyz/v:1.5/"
+            ],
+            "zyX/": [
+                "https://zyx.wumbl3.xyz/v:1.5/"
+            ],
+        }
+    }
+}

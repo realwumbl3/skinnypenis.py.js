@@ -1,0 +1,15 @@
+[Unit]
+Description=Gunicorn instance to serve a development app.
+after=network.target
+
+[Service]
+User=wumbl3priv
+Group=www-data
+WorkingDirectory=/home/wumbl3priv/AiCode/Things/B
+ExecStart=/home/wumbl3priv/AiCode/Things/B/start.sh
+Restart=always
+RestartSec=1
+Environment="PYTHONUNBUFFERED=TRUE"
+
+[Install]
+WantedBy=multi-user.target

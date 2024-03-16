@@ -36,8 +36,6 @@ const chatInput = html`
     });
 })
 
-console.log({ chatInput });
-
 html`
     <h1>Hello World</h1>
     ${chatHistory}

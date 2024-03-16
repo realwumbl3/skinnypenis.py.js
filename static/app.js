@@ -10,12 +10,6 @@ socketio.on('connect', () => {
 
 socketio.on('status', (data) => console.log("[socketio] status: ", data));
 
-css`
-    body {
-        background-color: #f0f0f0;
-        font-family: Arial, sans-serif;
-    }
-`;
 
 const chatHistory = html`
     <div this="chatHistory" id="chatHistory"></div>
@@ -41,3 +35,10 @@ html`
     ${chatHistory}
     ${chatInput}
 `.appendTo(document.body);
+
+css`
+    body {
+        background-color: #f0f0f0;
+        font-family: Arial, sans-serif;
+    }
+`;

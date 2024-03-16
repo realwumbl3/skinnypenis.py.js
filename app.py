@@ -1,7 +1,5 @@
 from server import app, socketIO, broadcastEmit, render_template
 
-from threading import Thread
-
 
 @app.route("/")
 def index():

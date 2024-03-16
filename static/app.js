@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import zyX, { html, css } from 'zyX';
+import zyX, { html, css, zyXArray, zyXDomArray } from 'zyX';
 
 const socketio = io('/socket.io');
 
@@ -10,17 +10,22 @@ socketio.on('connect', () => {
 
 socketio.on('status', (data) => console.log("[socketio] status: ", data));
 
+const messages = new zyXArray();
 
-const chatHistory = html`
-    <div this="chatHistory" id="chatHistory"></div>
-`.pass(({ chatHistory } = {}) => {
-    socketio.on('chat', (data) => {
-        chatHistory.innerHTML += `<p>${data.message}</p>`;
-    });
+const messagesDom = new zyXDomArray(messages, (message) => {
+    return html`
+        <div>${message}</div>
+    `;
 });
 
-const chatInput = html`
-    <input type="text" this="input" id="chatInput" placeholder="Enter your message">
+socketio.on('chat', (data) => {
+    messages.unshift(data.message);
+    if (messages.length > 10) messages.pop();
+});
+
+
+const input = html`
+    <input type="text" this="input" id="input" placeholder="Enter your message">
 `.pass(({ input } = {}) => {
     input.addEventListener('keyup', (e) => {
         if (e.key === 'Enter') {
@@ -31,9 +36,9 @@ const chatInput = html`
 })
 
 html`
-    <h1>Hello World</h1>
-    ${chatHistory}
-    ${chatInput}
+    <h1>Chat Lite.</h1>
+    ${messagesDom}
+    ${input}
 `.appendTo(document.body);
 
 css`

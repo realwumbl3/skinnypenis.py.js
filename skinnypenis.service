@@ -7,8 +7,6 @@ User=wumbl3priv
 Group=www-data
 WorkingDirectory=/home/wumbl3priv/AiCode/Things/B
 ExecStart=/home/wumbl3priv/AiCode/Things/B/start.sh
-Restart=always
-RestartSec=1
 Environment="PYTHONUNBUFFERED=TRUE"
 
 [Install]

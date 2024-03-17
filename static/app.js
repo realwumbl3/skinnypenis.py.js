@@ -10,13 +10,19 @@ socketio.on('connect', () => {
 
 socketio.on('status', (data) => console.log("[socketio] status: ", data));
 
-const messages = new zyXArray();
+const messages = new zyXArray(...data.latest_20);
 
-socketio.on('chat', (message) => messages.push(message));
+socketio.on('chat', (message) => {
+    console.log("new message: ", message);
+    messages.push(message)
+});
 
 const messagesDom = new zyXDomArray(messages, (message) => html`
-    <div>${message.content}</div>
-`, { limit: 10, classList: ['messages'] });
+    <div class=message>
+        <div class=username>${message.user} - </div>
+        <div>${message.content}</div>
+    </div>
+`, { classList: ['messages'], range: -10 });
 
 const input = html`
     <input type="text" this="input" id="input" placeholder="Enter your message">
@@ -30,11 +36,10 @@ const input = html`
     });
 })
 
-await zyxcss.l("static/css.css");
- 
+await css`url(/static/css.css)`;
+
 html`
     <h1>Chat Lite.</h1>
     ${messagesDom}
     ${input}
 `.appendTo(document.body);
-

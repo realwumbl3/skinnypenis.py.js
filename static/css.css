@@ -20,11 +20,18 @@ body {
     background-color: #03080e;
     align-items: flex-start;
 
-    &>div {
+    &>.message {
         padding: 5px;
         border-radius: 5px;
         border: 1px solid #ffffff3b;
         background-color: #03080e;
+        display: flex;
+        gap: .2em;
+
+        &>.username {
+            color: lightblue;
+            font-weight: bold;
+        }
     }
 }
 

@@ -1,0 +1,18 @@
+random_names = [
+    "elite",
+    "hacker",
+    "coder",
+    "programmer",
+    "xxLengedxx",
+    "gamer",
+    "noobmaster",
+    "pro",
+    "masked",
+    "unknown",
+    "anonymous",
+    "ghost",
+    "ninja",
+    "warrior",
+    "king",
+    "queen",
+]

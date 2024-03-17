@@ -1,5 +1,4 @@
-from flask import request, render_template
-from server import app, socketIO, broadcastEmit
+from server import app, socketIO, broadcastEmit, request, render_template
 from random import choice
 
 from sqlalchemy import create_engine, Column, Integer, String
@@ -44,9 +43,8 @@ def handle_chat(data):
     if session_id not in users:
         users[session_id] = choice(random_names)
     user = users[session_id]
-
-    broadcastEmit(event="chat", data={**data, "user": user})
     session = Session()
     message = Message(user=user, content=data["content"])
     session.add(message)
     session.commit()
+    broadcastEmit(event="chat", data={**data, "user": user})

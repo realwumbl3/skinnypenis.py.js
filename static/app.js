@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import zyX, { html, css, zyxcss, zyXArray, zyXDomArray } from 'zyX';
+import zyX, { html, css, zyXArray, zyXDomArray } from 'zyX';
 
 const socketio = io('/socket.io');
 
@@ -13,7 +13,6 @@ socketio.on('status', (data) => console.log("[socketio] status: ", data));
 const messages = new zyXArray(...data.latest_20);
 
 socketio.on('chat', (message) => {
-    console.log("new message: ", message);
     messages.push(message)
 });
 

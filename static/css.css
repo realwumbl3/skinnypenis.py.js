@@ -1,0 +1,41 @@
+body {
+    background-color: #00070e;
+    font-family: Arial, sans-serif;
+    padding: 1em;
+    display: grid;
+    place-items: stretch;
+    gap: 1em;
+    color: #fff;
+    text-align: center;
+}
+
+.messages {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background-color: ghostwhite;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ffffff3b;
+    background-color: #03080e;
+    align-items: flex-start;
+
+    &>div {
+        padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #ffffff3b;
+        background-color: #03080e;
+    }
+}
+
+input {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #03080e;
+    color: #fff;
+}
+
+input:focus {
+    outline: none;
+}

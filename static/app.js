@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import zyX, { html, css, zyXArray, zyXDomArray } from 'zyX';
+import zyX, { html, css, zyxcss, zyXArray, zyXDomArray } from 'zyX';
 
 const socketio = io('/socket.io');
 
@@ -12,38 +12,29 @@ socketio.on('status', (data) => console.log("[socketio] status: ", data));
 
 const messages = new zyXArray();
 
-const messagesDom = new zyXDomArray(messages, (message) => {
-    return html`
-        <div>${message}</div>
-    `;
-});
+socketio.on('chat', (message) => messages.push(message));
 
-socketio.on('chat', (data) => {
-    messages.unshift(data.message);
-    if (messages.length > 10) messages.pop();
-});
-
+const messagesDom = new zyXDomArray(messages, (message) => html`
+    <div>${message.content}</div>
+`, { limit: 10, classList: ['messages'] });
 
 const input = html`
     <input type="text" this="input" id="input" placeholder="Enter your message">
 `.pass(({ input } = {}) => {
     input.addEventListener('keyup', (e) => {
         if (e.key === 'Enter') {
-            socketio.emit('chat', { message: e.target.value });
+            if (e.target.value.trim() === '') return;
+            socketio.emit('chat', { content: e.target.value });
             e.target.value = '';
         }
     });
 })
 
+await zyxcss.l("static/css.css");
+ 
 html`
     <h1>Chat Lite.</h1>
     ${messagesDom}
     ${input}
 `.appendTo(document.body);
 
-css`
-    body {
-        background-color: #f0f0f0;
-        font-family: Arial, sans-serif;
-    }
-`;

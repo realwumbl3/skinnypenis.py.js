@@ -27,7 +27,7 @@ Base.metadata.create_all(engine)
 @app.route("/")
 def index():
     session = Session()
-    latest_20 = session.query(Message).limit(20).all()
+    latest_20 = session.query(Message).limit(-20).all()
     session.close()
     return render_template("index.html", data={"latest_20": [message.serialize for message in latest_20]})
 

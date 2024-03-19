@@ -35,7 +35,7 @@ const { messages_list, input, limit, scrolldown } = html`
 		<div class="input-area">
 				<input type="text" this="input" id="input" placeholder="Enter your message" 
 					zyx-keyup="${input_keyup}" zyx-input="${input_input}"
-				> 
+				></input>
 				<div class=limit><a this=limit>0</a> / ${max_len}</div>
 			</div>
 	</main>

@@ -8,6 +8,7 @@ from flask_cors import CORS
 from flask_caching import Cache
 from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room
+from flask_session import Session
 from zyXServe.Sqlite import SqliteDatabase
 from zyXServe.Debug import createLogger
 logging = createLogger("./log.log")
@@ -16,12 +17,15 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "butts"
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=31)
 app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_FILE_DIR"] = "./.flask_session/"
 app.config["DEBUG"] = True
 app.config["USE_RELOADER"] = True
 
 caching = Cache()
 
 Compress(app)
+
+Session(app)
 
 socketIO = SocketIO(
     app,

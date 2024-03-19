@@ -14,11 +14,13 @@ body {
 
 main {
     display: grid;
-    grid-auto-rows: max-content 1fr auto;
+    grid-auto-rows: max-content 1fr max-content;
     color: #fff;
     gap: .2em;
     place-items: stretch;
     padding: .2em;
+    position: absolute;
+    inset: 0;
 }
 
 h1 {
@@ -97,7 +99,7 @@ h1 {
     display: grid;
     grid-auto-flow: column;
     grid-template-columns: 1fr auto;
-    gap: .5em;
+    gap: .2em;
     align-items: center;
     justify-content: center;
     height: max-content;
@@ -108,6 +110,10 @@ h1 {
         border: 1px solid #ccc;
         background-color: #03080e;
         color: #fff;
+    }
+
+    &>.limit {
+        padding: 0 .2em;
     }
 
     &>input:focus {

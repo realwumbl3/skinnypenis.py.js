@@ -21,6 +21,12 @@ class User(db.base):
         return {"id": self.id, "name": self.name}
 
 
+def getMyUser(sess):
+    if not (user := sess.query(User).filter_by(sid=session.sid).first()):
+        sess.add(user := User(sid=session.sid))
+    return user
+
+
 class Message(db.base):
     __tablename__ = "messages"
     id = db.Column(db.Integer, primary_key=True)
@@ -42,6 +48,7 @@ db.create_all()
 @app.route("/")
 def index():
     with db.w() as sess:
+        user = getMyUser(sess)
         latest = sess.query(Message).order_by(Message.id.desc()).limit(LATEST_MSGS).all()
         return render_template(
             "index.html",
@@ -49,6 +56,7 @@ def index():
                 "latest": [msg.serialize for msg in latest],
                 "max_len": MAX_MSG_LEN,
                 "msg_limit": LATEST_MSGS,
+                "me": {"id": user.id, **user.serialize},
             },
         )
 
@@ -56,9 +64,7 @@ def index():
 @socketIO.on("chat", namespace="/socket.io")
 def handle_chat(data):
     with db.w() as sess:
-        user = sess.query(User).filter_by(sid=session.sid).first()
-        if not user:
-            sess.add(user := User(sid=session.sid))
+        user = getMyUser(sess)
         new_msg = Message(user=user, content=data["content"])
         sess.add(new_msg)
         sess.commit()

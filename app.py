@@ -1,50 +1,47 @@
-from server import app, socketIO, broadcastEmit, request, render_template
+from server import app, request, socketIO, broadcastEmit, SqliteDatabase, render_template
 from random import choice
+from randomnames import random_names
 
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+db = SqliteDatabase({"db_path": "./app.db", "overwrite": False})
 
-Base = declarative_base()
-engine = create_engine("sqlite:///app.db")
-Session = sessionmaker(bind=engine)
+LATEST_MSGS = 15
+MAX_MSG_LEN = 300
+
+USERS = {}
 
 
-class Message(Base):
+class Message(db.base):
     __tablename__ = "messages"
-    id = Column(Integer, primary_key=True)
-    user = Column(String)
-    content = Column(String)
+    id = db.Column(db.Integer, primary_key=True)
+    user = db.Column(db.String)
+    content = db.Column(db.String)
 
     @property
     def serialize(self):
         return {"id": self.id, "user": self.user, "content": self.content}
 
+    def __init__(self, user, content):
+        self.user = user
+        self.content = content[0:MAX_MSG_LEN]
 
-Base.metadata.create_all(engine)
+
+db.create_all()
 
 
 @app.route("/")
 def index():
-    session = Session()
-    latest_20 = session.query(Message).limit(-20).all()
-    session.close()
-    return render_template("index.html", data={"latest_20": [message.serialize for message in latest_20]})
-
-
-from randomnames import random_names
-
-users = {}
+    with db.w() as session:
+        latest = session.query(Message).order_by(Message.id.desc()).limit(LATEST_MSGS).all()
+        serialized = [msg.serialize for msg in latest]
+        return render_template("index.html", data={"latest": serialized, "max_len": MAX_MSG_LEN})
 
 
 @socketIO.on("chat", namespace="/socket.io")
 def handle_chat(data):
-    session_id = request.sid
-    if session_id not in users:
-        users[session_id] = choice(random_names)
-    user = users[session_id]
-    session = Session()
-    message = Message(user=user, content=data["content"])
-    session.add(message)
-    session.commit()
-    broadcastEmit(event="chat", data={**data, "user": user})
+    if request.sid not in USERS:
+        USERS[request.sid] = choice(random_names)
+    user = USERS[request.sid]
+    with db.w(commit=True) as session:
+        new_msg = Message(user=user, content=data["content"])
+        session.add(new_msg)
+        broadcastEmit(event="chat", data=new_msg.serialize)

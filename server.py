@@ -8,6 +8,9 @@ from flask_cors import CORS
 from flask_caching import Cache
 from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room
+from zyXServe.Sqlite import SqliteDatabase
+from zyXServe.Debug import createLogger
+logging = createLogger("./log.log")
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "butts"

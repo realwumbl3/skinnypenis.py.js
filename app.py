@@ -19,32 +19,7 @@ db = SqliteDatabase({"db_path": "./app.db", "overwrite": False})
 
 CONFIG = {"MSG_COUNT": 100, "MAX_LEN": 256, "MAX_NAME_LEN": 20}
 
-PY_COMMANDS = [os.path.splitext(os.path.basename(x))[0] for x in glob("commands/*.py")]
-PY_COMMANDS_HUMAN = re.compile(rf"^\/({'|'.join(PY_COMMANDS)}) (.*)")
-
-
-# match PY_COMMANDS and return leading content
-def matchCommand(content):
-    if match := PY_COMMANDS_HUMAN.match(content):
-        return (match.group(1), match.group(2))
-    return None
-
-
-def executeCommand(command, *args, **kwargs):
-    try:
-        importlib.import_module(f"commands.{command}").command(*args, **kwargs)
-    except Exception as e:
-        logging.exception(e)
-
-
-JS_EGGS = [os.path.splitext(os.path.basename(x))[0] for x in glob("static/eastereggs/*.js")]
-JS_EGGS_RE = re.compile(rf"({')|('.join(JS_EGGS)})")
-
-
-def matchEgg(content):
-    if match := JS_EGGS_RE.search(content):
-        return match.group()
-    return None
+from eggsAndCommands import matchEgg, matchCommand, executeCommand
 
 
 class User(db.base):
@@ -108,5 +83,5 @@ def handle_chat(data):
         sess.add(new_msg)
         sess.commit()
         if match := matchCommand(content):
-            executeCommand(match[0], trailing=match[1], content=content, user=user, sess=sess)
+            executeCommand(match[0], trailing=match[1], content=content, user=user, new_msg=new_msg, sess=sess)
         broadcastEmit(event="chat", data={**new_msg.serialize, "egg": matchEgg(content)})

@@ -23,7 +23,6 @@ socketio.on('rename', (data) => {
 	messages.forEach(_ => _.user.id === data.id && (_.user.name = data.name))
 })
 socketio.on('recolor', (data) => {
-	messages.push({ type: "sys", user: { name: "system" }, content: `${data.name} changed color to ${data.color}.` });
 	messages.forEach(_ => _.user.id === data.id && (_.user.color = data.color))
 })
 

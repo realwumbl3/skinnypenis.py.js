@@ -108,8 +108,11 @@ main {
                 background-image: linear-gradient(45deg, #141414, transparent);
             }
 
-            &.sys .username {
-                color: #ff6f6f;
+            &.sys {
+                font-size: 0.8em;
+                &>.username {
+                    color: #ff6f6f;
+                }
             }
         }
     }

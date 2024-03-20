@@ -5,6 +5,7 @@ export const audio = new zyxAudio("/static/sounds/");
 const socketio = io('/socket.io');
 const messages = new zyXArray(...data.latest.reverse());
 const { me, MAX_LEN, MSG_COUNT } = data;
+me.my_send_history = [];
 
 socketio.on('connect', () => {
 	messages.push({ type: "sys", user: { name: "system" }, content: "Connected to the server." });
@@ -56,8 +57,16 @@ function messages_scrolltobottom() { messages_list.scrollTo({ top: messages_list
 
 function input_onkeyup(e) {
 	if (e.key === 'Enter' && input.value.trim() !== '') {
+		me.my_send_history.push(input.value);
 		socketio.emit('chat', { content: input.value }) && (input.value = '') || (limit.textContent = 0);
 		messages_scrolltobottom()
+	}
+	if (e.key === 'ArrowUp' && e.ctrlKey) {
+		const history = me.my_send_history;
+		if (history.length) {
+			input.value = history[history.length - 1];
+			input.setSelectionRange(input.value.length, input.value.length);
+		}
 	}
 }
 function input_oninput() { (input.value.length > MAX_LEN) && (input.value = input.value.slice(0, MAX_LEN)) || (limit.textContent = input.value.length); }
@@ -71,6 +80,6 @@ function newMessage(data, previous) {
 function executeEgg(data) {
 	setTimeout(_ => {
 		const message = messages_list.__zyXArray__.get(data);
-		import(`/static/eastereggs/${data.egg.egg}.js`).then(_ => _.default({ data, message, me: me }))
+		import(`/static/eastereggs/${data.egg}.js`).then(_ => _.default({ data, message, me: me }))
 	}, 50)
 }

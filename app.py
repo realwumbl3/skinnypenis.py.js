@@ -1,5 +1,7 @@
 from glob import glob
+import logging
 import re, os
+import importlib
 from server import (
     app,
     session,
@@ -17,8 +19,32 @@ db = SqliteDatabase({"db_path": "./app.db", "overwrite": False})
 
 CONFIG = {"MSG_COUNT": 100, "MAX_LEN": 256, "MAX_NAME_LEN": 20}
 
-JS_EASTEREGGS = [os.path.splitext(os.path.basename(x))[0] for x in glob("static/eastereggs/*.js")]
-EASTEREGG_REGEX = re.compile(rf"({')|('.join(JS_EASTEREGGS)})")
+PY_COMMANDS = [os.path.splitext(os.path.basename(x))[0] for x in glob("commands/*.py")]
+PY_COMMANDS_HUMAN = re.compile(rf"^\/({'|'.join(PY_COMMANDS)}) (.*)")
+
+
+# match PY_COMMANDS and return leading content
+def matchCommand(content):
+    if match := PY_COMMANDS_HUMAN.match(content):
+        return (match.group(1), match.group(2))
+    return None
+
+
+def executeCommand(command, *args, **kwargs):
+    try:
+        importlib.import_module(f"commands.{command}").command(*args, **kwargs)
+    except Exception as e:
+        logging.exception(e)
+
+
+JS_EGGS = [os.path.splitext(os.path.basename(x))[0] for x in glob("static/eastereggs/*.js")]
+JS_EGGS_RE = re.compile(rf"({')|('.join(JS_EGGS)})")
+
+
+def matchEgg(content):
+    if match := JS_EGGS_RE.search(content):
+        return match.group()
+    return None
 
 
 class User(db.base):
@@ -68,13 +94,7 @@ def index():
         user, srcstats = getMyUser(sess), filesLineCount(["static/app.js", "static/css.css", "app.py"], noEmpty=True)
         return render_template(
             "index.html",
-            data={
-                "latest": latestMessages(sess),
-                "me": {"id": user.id, **user.serialize},
-                "src": srcstats,
-                "JS_EASTEREGGS": JS_EASTEREGGS,
-                **CONFIG,
-            },
+            data={"latest": latestMessages(sess), "me": {"id": user.id, **user.serialize}, "src": srcstats, **CONFIG},
         )
 
 
@@ -84,18 +104,9 @@ def handle_chat(data):
         content, user = remove_html_tags(data["content"][: CONFIG["MAX_LEN"]]), getMyUser(sess)
         if not content:
             return
-        if content.lower().startswith("my name is "):
-            old = user.name
-            user.name = content[11 : CONFIG["MAX_NAME_LEN"] + 11]
-            broadcastEmit(event="rename", data=dict(user.serialize, old=old))
-        if content.lower().startswith("my color is "):
-            user.color = content[12:20]
-            broadcastEmit(event="recolor", data=user.serialize)
         new_msg = Message(user=user, content=content)
         sess.add(new_msg)
         sess.commit()
-        if match := EASTEREGG_REGEX.search(content):
-            egg = dict(egg=match.group(), msg=new_msg.serialize)
-        else:
-            egg = None
-        broadcastEmit(event="chat", data={**new_msg.serialize, "egg": egg})
+        if match := matchCommand(content):
+            executeCommand(match[0], trailing=match[1], content=content, user=user, sess=sess)
+        broadcastEmit(event="chat", data={**new_msg.serialize, "egg": matchEgg(content)})

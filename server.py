@@ -86,9 +86,8 @@ def filesLineCount(files, noEmpty=False):
     return result
 
 
-from bs4 import BeautifulSoup
+import html
 
 
 def remove_html_tags(input_str):
-    soup = BeautifulSoup(input_str, "html.parser")
-    return soup.get_text()
+    return html.escape(input_str)

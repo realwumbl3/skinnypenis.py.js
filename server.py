@@ -11,6 +11,7 @@ from flask_socketio import SocketIO, join_room, leave_room
 from flask_session import Session
 from zyXServe.Sqlite import SqliteDatabase
 from zyXServe.Debug import createLogger
+
 logging = createLogger("./log.log")
 
 app = Flask(__name__)
@@ -59,3 +60,35 @@ def handle_socketio_leave(data):
 def broadcastEmit(event="status", data=None, room="root"):
     print("broadcastEmit room:", room, "event:", event, "data:", data)
     socketIO.emit(room=room, event=event, data=data, broadcast=True, namespace="/socket.io")
+
+
+# regex to match that all characters are one of `}; or empty
+import re
+
+
+def matchJsClosingLine(line):
+    return re.match(r"^\s*([`};]|//|$)", line)
+
+
+def filesLineCount(files, noEmpty=False):
+    result = {}
+    total_lines = 0
+    for file in files:
+        this_length = 0
+        with open(file) as f:
+            for line in f:
+                if noEmpty and matchJsClosingLine(line.strip()):
+                    continue
+                total_lines += 1
+                this_length += 1
+            result[file] = {"lines": this_length}
+    result["total"] = total_lines
+    return result
+
+
+from bs4 import BeautifulSoup
+
+
+def remove_html_tags(input_str):
+    soup = BeautifulSoup(input_str, "html.parser")
+    return soup.get_text()

@@ -1,12 +1,24 @@
-import logging
-from server import app, session, request, socketIO, broadcastEmit, SqliteDatabase, render_template
+from glob import glob
+import re, os
+from server import (
+    app,
+    session,
+    socketIO,
+    broadcastEmit,
+    SqliteDatabase,
+    render_template,
+    filesLineCount,
+    remove_html_tags,
+)
 from random import choice
 from randomnames import random_names
 
 db = SqliteDatabase({"db_path": "./app.db", "overwrite": False})
 
-LATEST_MSGS = 20
-MAX_MSG_LEN = 300
+CONFIG = {"MSG_COUNT": 100, "MAX_LEN": 256, "MAX_NAME_LEN": 20}
+
+JS_EASTEREGGS = [os.path.splitext(os.path.basename(x))[0] for x in glob("static/eastereggs/*.js")]
+EASTEREGG_REGEX = re.compile(rf"({')|('.join(JS_EASTEREGGS)})")
 
 
 class User(db.base):
@@ -15,10 +27,11 @@ class User(db.base):
     name = db.Column(db.String, default=lambda: choice(random_names))
     sid = db.Column(db.String)
     messages = db.relationship("Message", backref="user")
+    color = db.Column(db.String, default=lambda: f"#{hex(choice(range(256**3)))[2:]}")
 
     @property
     def serialize(self):
-        return {"id": self.id, "name": self.name}
+        return {"id": self.id, "name": self.name, "color": self.color}
 
 
 def getMyUser(sess):
@@ -39,7 +52,11 @@ class Message(db.base):
 
     def __init__(self, user, content):
         self.user = user
-        self.content = content[0:MAX_MSG_LEN]
+        self.content = content
+
+
+def latestMessages(sess, count=CONFIG["MSG_COUNT"]):
+    return [msg.serialize for msg in sess.query(Message).order_by(Message.id.desc()).limit(count).all()]
 
 
 db.create_all()
@@ -48,15 +65,15 @@ db.create_all()
 @app.route("/")
 def index():
     with db.w() as sess:
-        user = getMyUser(sess)
-        latest = sess.query(Message).order_by(Message.id.desc()).limit(LATEST_MSGS).all()
+        user, srcstats = getMyUser(sess), filesLineCount(["static/app.js", "static/css.css", "app.py"], noEmpty=True)
         return render_template(
             "index.html",
             data={
-                "latest": [msg.serialize for msg in latest],
-                "max_len": MAX_MSG_LEN,
-                "msg_limit": LATEST_MSGS,
+                "latest": latestMessages(sess),
                 "me": {"id": user.id, **user.serialize},
+                "src": srcstats,
+                "JS_EASTEREGGS": JS_EASTEREGGS,
+                **CONFIG,
             },
         )
 
@@ -64,8 +81,21 @@ def index():
 @socketIO.on("chat", namespace="/socket.io")
 def handle_chat(data):
     with db.w() as sess:
-        user = getMyUser(sess)
-        new_msg = Message(user=user, content=data["content"])
+        content, user = remove_html_tags(data["content"][: CONFIG["MAX_LEN"]]), getMyUser(sess)
+        if not content:
+            return
+        if content.lower().startswith("my name is "):
+            old = user.name
+            user.name = content[11 : CONFIG["MAX_NAME_LEN"] + 11]
+            broadcastEmit(event="rename", data=dict(user.serialize, old=old))
+        if content.lower().startswith("my color is "):
+            user.color = content[12:20]
+            broadcastEmit(event="recolor", data=user.serialize)
+        new_msg = Message(user=user, content=content)
         sess.add(new_msg)
         sess.commit()
-        broadcastEmit(event="chat", data=new_msg.serialize)
+        if match := EASTEREGG_REGEX.search(content):
+            egg = dict(egg=match.group(), msg=new_msg.serialize)
+        else:
+            egg = None
+        broadcastEmit(event="chat", data={**new_msg.serialize, "egg": egg})

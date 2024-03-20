@@ -5,8 +5,8 @@
 }
 
 body {
-    background-color: #00070e;
-    font-family: Arial, sans-serif;
+    background-color: #000000;
+    font-family: system-ui;
     display: grid;
     place-items: stretch;
     height: 100vh;
@@ -26,6 +26,12 @@ main {
 .title {
     text-align: center;
     margin: unset;
+    text-align: end;
+    font-size: 0.7em;
+    padding-right: 0.4em;
+    color: #828282;
+    font-family: system-ui;
+    font-weight: 1000;
 }
 
 .messagesArea {
@@ -47,6 +53,7 @@ main {
         bottom: .3em;
         user-select: none;
         cursor: pointer;
+
         &.visible {
             opacity: 1;
             pointer-events: all;
@@ -61,21 +68,21 @@ main {
         padding: .2em;
         border-radius: .3em;
         border: 1px solid #ffffff3b;
-        background-color: #060e17;
+        background-color: #000000;
         align-items: start;
         overflow-y: auto;
 
-
         &>.message {
-            padding: .5em;
+            padding: 0.2em;
             border-radius: .3em;
-            border: 1px solid #ffffff3b;
-            background-color: #021021;
+            border: 1px solid #ffffff14;
+            background-color: #000000;
             max-width: 100%;
             display: grid;
-            grid-auto-columns: auto auto 1fr;
+            grid-auto-columns: auto 1fr;
             grid-auto-flow: column;
             gap: .4em;
+            align-items: center;
 
             &>.content {
                 overflow-wrap: break-word;
@@ -83,10 +90,22 @@ main {
                 text-align: left;
             }
 
+            &.sameuser {
+                border: 1px solid #ffffff07;
+
+                &>.username {
+                    opacity: 0;
+                }
+            }
+
             &>.username {
                 color: lightblue;
                 font-weight: bold;
                 text-wrap: nowrap;
+                padding: 0.2em;
+                border: .05em #ffffff45 solid;
+                border-radius: .3em;
+                background-image: linear-gradient(45deg, #141414, transparent);
             }
 
             &.sys .username {
@@ -97,27 +116,81 @@ main {
 }
 
 .input-area {
+    position: relative;
+    height: max-content;
+    padding: .5em;
+    grid-template-columns: 1fr auto;
     display: grid;
     grid-auto-flow: column;
-    grid-template-columns: 1fr auto;
     gap: .2em;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
-    height: max-content;
+    --double-rainbow-gradient: linear-gradient(270deg, #ff00ec, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
 
-    &>input {
-        padding: .5em;
-        border-radius: .3em;
-        border: 1px solid #ccc;
-        background-color: #03080e;
-        color: #fff;
+    &>.input {
+        display: grid;
+        place-items: stretch;
+        position: relative;
+        border-radius: 1em;
+        background-color: #080808;
+        box-shadow: inset 0 .2em 0.5em #131313;
+
+        &>input {
+            padding: .4em;
+            background-color: transparent;
+            color: #fff;
+            border-radius: 5em;
+            border: unset;
+
+            &:focus {
+                outline: none;
+            }
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            bottom: -0.1em;
+            z-index: -1;
+            filter: blur(0.1em);
+            border-radius: inherit;
+            background-image: var(--double-rainbow-gradient);
+        }
     }
 
     &>.limit {
-        padding: 0 .2em;
+        padding: 0.4em;
+        border-radius: 5em;
+        position: relative;
+        display: flex;
+        gap: .15em;
+        align-items: center;
+        user-select: none;
+        cursor: pointer;
+        background-color: #080808;
+        color: lightgrey;
+        box-shadow: inset 0 .2em 0.5em #131313;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            bottom: -0.1em;
+            z-index: -1;
+            filter: blur(0.1em);
+            border-radius: inherit;
+            background-image: var(--double-rainbow-gradient);
+        }
+
+        &>span {
+            font-size: 0.85em;
+        }
+
+        &>span:nth-child(2) {
+            font-size: 0.7em;
+        }
+
     }
 
-    &>input:focus {
-        outline: none;
-    }
 }

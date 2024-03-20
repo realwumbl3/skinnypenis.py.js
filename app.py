@@ -1,8 +1,5 @@
-from glob import glob
-import logging
-import re, os
-import importlib
 from server import (
+    logging,
     app,
     session,
     socketIO,
@@ -12,23 +9,23 @@ from server import (
     filesLineCount,
     remove_html_tags,
 )
-from random import choice
-from randomnames import random_names
 
-db = SqliteDatabase({"db_path": "./app.db", "overwrite": False})
+from randos import random_name, random_color
+from eggsAndCommands import matchEgg, matchCommand, executeCommand
+
+DB_FILE = "chat.db"
+db = SqliteDatabase({"db_path": f"./database/{DB_FILE}", "overwrite": False})
 
 CONFIG = {"MSG_COUNT": 100, "MAX_LEN": 256, "MAX_NAME_LEN": 20}
-
-from eggsAndCommands import matchEgg, matchCommand, executeCommand
 
 
 class User(db.base):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, default=lambda: choice(random_names))
+    name = db.Column(db.String, default=random_name)
     sid = db.Column(db.String)
     messages = db.relationship("Message", backref="user")
-    color = db.Column(db.String, default=lambda: f"#{hex(choice(range(256**3)))[2:]}")
+    color = db.Column(db.String, default=random_color)
 
     @property
     def serialize(self):
@@ -46,6 +43,7 @@ class Message(db.base):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    deleted = db.Column(db.Boolean, default=False)
 
     @property
     def serialize(self):
@@ -57,7 +55,10 @@ class Message(db.base):
 
 
 def latestMessages(sess, count=CONFIG["MSG_COUNT"]):
-    return [msg.serialize for msg in sess.query(Message).order_by(Message.id.desc()).limit(count).all()]
+    return [
+        msg.serialize
+        for msg in sess.query(Message).filter(Message.deleted == False).order_by(Message.id.desc()).limit(count).all()
+    ]
 
 
 db.create_all()

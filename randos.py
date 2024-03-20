@@ -1,3 +1,5 @@
+from random import choice
+
 random_names = [
     "hacker",
     "wizard",
@@ -28,3 +30,12 @@ random_names = [
     "sugma",
     "sugondese",
 ]
+
+
+# only bright colors in hex
+def random_color():
+    return f"#{''.join([choice('89ABCDEF') for _ in range(6)])}"
+
+
+def random_name():
+    return choice(random_names)

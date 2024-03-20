@@ -5,7 +5,7 @@ from glob import glob
 import logging
 
 PY_COMMANDS = [os.path.splitext(os.path.basename(x))[0] for x in glob("commands/*.py")]
-PY_COMMANDS_HUMAN = re.compile(rf"^\/({'|'.join(PY_COMMANDS)}) (.*)")
+PY_COMMANDS_HUMAN = re.compile(r"^\/({})(?:\s+(.+))?$".format("|".join(PY_COMMANDS)))
 
 
 # match PY_COMMANDS and return leading content

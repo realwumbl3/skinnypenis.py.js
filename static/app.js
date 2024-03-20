@@ -7,8 +7,10 @@ const messages = new zyXArray(...data.latest.reverse());
 const { me, MAX_LEN, MSG_COUNT } = data;
 me.my_send_history = [];
 
+function systemMessage(content) { messages.push({ type: "sys", user: { name: "system" }, content: content }) }
+
 socketio.on('connect', () => {
-	messages.push({ type: "sys", user: { name: "system" }, content: "Connected to the server." });
+	systemMessage("Connected to the server.")
 	socketio.emit('enter', { room: "root" }) && messages_scrolltobottom() || input.focus();
 });
 socketio.on('disconnect', () => messages.push({ type: "sys", user: { name: "system" }, content: "Disconnected from the server." }));
@@ -19,12 +21,13 @@ socketio.on('chat', (message) => {
 	if (message.user.id !== me.id) messages_nearbottom() ? messages_scrolltobottom() : scrolldown.classList.add('visible');
 });
 socketio.on('rename', (data) => {
-	messages.push({ type: "sys", user: { name: "system" }, content: `${data.old} is now ${data.name}.` });
+	systemMessage(`${data.old} is now ${data.name}.`)
 	messages.forEach(_ => _.user.id === data.id && (_.user.name = data.name))
 })
 socketio.on('recolor', (data) => {
 	messages.forEach(_ => _.user.id === data.id && (_.user.color = data.color))
 })
+socketio.on('clearchat', () => messages.clear() || systemMessage("Chat cleared."));
 
 await css`url(/static/css.css)`;
 

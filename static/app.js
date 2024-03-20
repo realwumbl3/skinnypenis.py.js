@@ -18,7 +18,8 @@ socketio.on('status', (data) => console.log("[socketio] status: ", data));
 socketio.on('chat', (message) => {
 	messages.push(message) || audio.play({ name: "newmsg.mp3" });
 	if (message.egg) executeEgg(message);
-	if (message.user.id !== me.id) messages_nearbottom() ? messages_scrolltobottom() : scrolldown.classList.add('visible');
+	messages_nearbottom() && messages_scrolltobottom()
+	!messages_nearbottom() && (message.user.id !== me.id) && scrolldown.classList.add('visible');
 });
 socketio.on('rename', (data) => {
 	systemMessage(`${data.old} is now ${data.name}.`)

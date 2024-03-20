@@ -9,11 +9,11 @@ export default function secret({
     zyX(this)
         .delayChain("fart")
         .then((_) => {
-            document.body.style.transition = 'filter 4s';
+            document.body.style.transition = 'filter 2s';
             document.body.style.filter = 'hue-rotate(360deg)';
         })
         .then((_) => {
             document.body.style.filter = 'hue-rotate(0deg)';
             document.body.style.transition = '';
-        }, 4000)
+        }, 2000)
 }

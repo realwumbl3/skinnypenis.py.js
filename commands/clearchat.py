@@ -1,13 +1,14 @@
-from app import broadcastEmit, Message, DB_FILE, logging
+from app import broadcastEmit, Message, logging
 import os
 from shutil import copyfile
 
 
 def command(trailing=None, user=None, sess=None, **kwargs):
-    if user.id != 1:
+    logging.info(f"clearchat: {user.id}")
+    if user.id != 12:
         return
     # archive the current database
-    active_db = f"./database/{DB_FILE}"
+    active_db = f"./database/chat.db"
     archive_path = fileSuffix(f"./database/cleared/old")
     archive_path += ".db"
     copyfile(active_db, archive_path)

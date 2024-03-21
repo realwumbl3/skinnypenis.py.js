@@ -15,9 +15,9 @@ socketio.on('connect', () => {
 });
 socketio.on('disconnect', () => messages.push({ type: "sys", user: { name: "system" }, content: "Disconnected from the server." }));
 socketio.on('status', (data) => console.log("[socketio] status: ", data));
-socketio.on('chat', (message) => {
+socketio.on('chat', async (message) => {
+	if (message.egg) await executeEgg(message);
 	messages.push(message) || audio.play({ name: "newmsg.mp3" });
-	if (message.egg) executeEgg(message);
 	messages_nearbottom() && messages_scrolltobottom()
 	!messages_nearbottom() && (message.user.id !== me.id) && scrolldown.classList.add('visible');
 });
@@ -29,6 +29,11 @@ socketio.on('recolor', (data) => {
 	messages.forEach(_ => _.user.id === data.id && (_.user.color = data.color))
 })
 socketio.on('clearchat', () => messages.clear() || systemMessage("Chat cleared."));
+
+async function executeEgg(data) {
+	const message = messages_list.__zyXArray__.get(data);
+	import(`/static/eastereggs/${data.egg}.js`).then(_ => _.default({ data, message, messages_list, me, main, socketio }))
+}
 
 await css`url(/static/css.css)`;
 
@@ -43,10 +48,9 @@ const { main, messages_list, input, limit, scrolldown } = html`
 		</div>
 		<div class=input-area>
 			<div class=input>
-				<input type=text this=input id=input placeholder="Enter your message"
-					zyx-keyup="${input_onkeyup}" zyx-input="${input_oninput}"></input></div>
+				<input type=text this=input id=input placeholder="Enter your message" maxlength="${MAX_LEN}"
+					zyx-keyup="${input_onkeyup}" zyx-input="${input_oninput}"/></div>
 				<div class=limit><span this=limit>0</span><span>/</span><span>${MAX_LEN}</span></div>
-			
 		</div>
 	</main>
 `.appendTo(document.body)
@@ -72,17 +76,14 @@ function input_onkeyup(e) {
 		}
 	}
 }
-function input_oninput() { (input.value.length > MAX_LEN) && (input.value = input.value.slice(0, MAX_LEN)) || (limit.textContent = input.value.length); }
+function input_oninput() { (limit.textContent = input.value.length); }
 
-function newMessage(data, previous) {
-	return html`<div this=msg class="message ${data?.type || "user"} ${previous && previous.item.user.id === data.user.id ? "sameuser" : "newmsg"}" style="${data?.style}">
+function newMessage(data, previous, nextitem) {
+	const [isSameUser, isDifferentUser] = [previous && previous.item.user.id === data.user.id, previous && previous.item.user.id !== data.user.id];
+	const [isLastOfUser, isNotLastOfUser] = [!nextitem || nextitem.user.id !== data.user.id, nextitem && nextitem.user.id === data.user.id];
+	const single = isDifferentUser && isLastOfUser;
+	const position_class = `${single && "single"} ${isSameUser ? "usersame" : "userfirst"} ${isLastOfUser && 'userlast'}`
+	return html`<div this=msg class="message ${data?.type || "user"} ${position_class}" style="${data?.style}">
         <div class=username style="${"color:" + data.user.color};" >${data.user.name}</div><div class=content>${data.content}</div>
     </div>`
-}
-
-function executeEgg(data) {
-	setTimeout(_ => {
-		const message = messages_list.__zyXArray__.get(data);
-		import(`/static/eastereggs/${data.egg}.js`).then(_ => _.default({ data, message, me: me }))
-	}, 50)
 }

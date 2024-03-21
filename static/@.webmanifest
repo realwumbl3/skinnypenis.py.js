@@ -1,0 +1,29 @@
+{
+	"theme_color": "#ab00ea",
+	"background_color": "#17002a",
+	"display": "standalone",
+	"scope": "/",
+	"start_url": "/",
+	"name": "chat.pipp",
+	"short_name": "chat.pipp",
+	"description": "chat.pipp - wumbl3",
+	"icons": [
+		{
+			"src": "./pngs/pipp-256.png",
+			"sizes": "256x256",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "./pngs/pipp-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		}
+	],
+	"diabled": {
+		"display_override": [
+			"window-controls-overlay"
+		]
+	}
+}

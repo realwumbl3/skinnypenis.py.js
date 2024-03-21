@@ -2,15 +2,17 @@
 
 from datetime import timedelta
 from user_agents import parse
+import os
 
 from flask import *
 from flask_cors import CORS
 from flask_caching import Cache
 from flask_compress import Compress
-from flask_socketio import SocketIO, join_room, leave_room
+from flask_socketio import SocketIO, join_room, leave_room, emit as socketEmit
 from flask_session import Session
 from zyXServe.Sqlite import SqliteDatabase
 from zyXServe.Debug import createLogger
+import atexit
 
 logging = createLogger("./log.log")
 
@@ -57,9 +59,16 @@ def handle_socketio_leave(data):
     leave_room(room)
 
 
+def cleanup():
+    broadcastEmit(data={"status": "server is restarting"})
+
+
+atexit.register(cleanup)
+
+
 def broadcastEmit(event="status", data=None, room="root"):
     print("broadcastEmit room:", room, "event:", event, "data:", data)
-    socketIO.emit(room=room, event=event, data=data, broadcast=True, namespace="/socket.io")
+    socketIO.emit(room=room, event=event, data=data, namespace="/socket.io")
 
 
 # regex to match that all characters are one of `}; or empty

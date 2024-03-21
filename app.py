@@ -4,6 +4,7 @@ from server import (
     session,
     socketIO,
     broadcastEmit,
+    socketEmit,
     SqliteDatabase,
     render_template,
     filesLineCount,
@@ -13,10 +14,10 @@ from server import (
 from randos import random_name, random_color
 from eggsAndCommands import matchEgg, matchCommand, executeCommand
 
-DB_FILE = "chat.db"
-db = SqliteDatabase({"db_path": f"./database/{DB_FILE}", "overwrite": False})
+db = SqliteDatabase({"db_path": f"./database/chat.db", "overwrite": False})
 
-CONFIG = {"MSG_COUNT": 100, "MAX_LEN": 256, "MAX_NAME_LEN": 20}
+CONFIG = {"MSG_COUNT": 70, "MAX_LEN": 256, "MAX_NAME_LEN": 40}
+
 
 
 class User(db.base):
@@ -86,3 +87,4 @@ def handle_chat(data):
         if match := matchCommand(content):
             executeCommand(match[0], trailing=match[1], content=content, user=user, new_msg=new_msg, sess=sess)
         broadcastEmit(event="chat", data={**new_msg.serialize, "egg": matchEgg(content)})
+

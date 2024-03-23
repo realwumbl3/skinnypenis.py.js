@@ -3,18 +3,21 @@ import zyX, { html, css, zyXArray, zyxAudio } from 'zyX';
 import { audio } from "../app.js"
 
 export default async function secret({
-    data, message, me, main
+    data, message, me, main, UI
 }) {
-
     const { style } = html`
         <style this=style>
-            body {
+            .messagesArea {
                 perspective: 40em;
+                backdrop-filter: blur(0);
             }
-            main{
+            .kicked-forward {
                 animation: kick-forward 1400ms 2200ms linear forwards;
             }
-            .fbi-open{
+            .reset-anim {
+                animation: reset 130ms ease-out forwards;
+            }
+            #fbi-video {
                 position: absolute;
                 width: 100%;
                 height: 100%;
@@ -32,20 +35,36 @@ export default async function secret({
                     transform: translate3d(0,200%,40em) rotateX(90deg) rotateY(200deg) rotateZ(300deg);
                 }
             }
-
+            @keyframes reset {
+                0%{
+                    opacity: 0;
+                    transform: translate3d(0,0,-3em);
+                }
+                100%{
+                    opacity: 1;
+                    transform: translate3d(0,0,0);
+                }
+            }
         </style>
-    `.const()
+    `.const();
 
-    const { video } = html`<video this=video autoplay src="/static/videos/fbi-open-up.mp4" class="fbi-open"></video>`.const()
-    main.before(video);
-    await new Promise(r => video.addEventListener('canplay', r));
-    console.log("video started")
-    video.volume = 0.3;
-    main.before(style);
-    await new Promise(r => video.addEventListener('ended', r));
-    video.remove();
-    style.remove();
-    console.log("video ended")
+    (async () => {
+        UI.messages_list.classList.add('kicked-forward');
+        const { video } = html`<video this=video autoplay src="/static/videos/fbi-open-up.mp4" id="fbi-video"></video>`.const()
+        main.before(video);
+        await new Promise(r => video.addEventListener('canplay', r));
+        console.log("video started")
+        video.volume = 0.3;
+        main.before(style);
+        await new Promise(r => video.addEventListener('ended', r));
+        UI.messages_list.classList.remove('kicked-forward');
+        UI.messages_list.classList.add('reset-anim');
+        await new Promise(r => setTimeout(r, 200));
+        video.remove();
+        style.remove();
+        console.log("video ended")
+        UI.messages_list.classList.remove('reset-anim');
+    })()
 }
 
 

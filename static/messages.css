@@ -1,0 +1,119 @@
+.messagesArea {
+    display: grid;
+    place-items: stretch;
+    overflow: hidden;
+    position: relative;
+    backdrop-filter: blur(1em);
+
+    &>.scrolldown {
+        position: absolute;
+        bottom: 0;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity .3s;
+        justify-self: center;
+        padding: .4em;
+        border-radius: .5em;
+        background-color: deeppink;
+        bottom: .3em;
+        user-select: none;
+        cursor: pointer;
+
+        &.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+    }
+
+    &>.messages {
+        display: grid;
+        grid-auto-flow: row;
+        grid-auto-rows: max-content;
+        padding: .2em;
+        border-radius: .5em;
+        border: 1px solid #ffffff3b;
+        background-color: #00000056;
+        align-items: start;
+        overflow-y: auto;
+
+        &>.message {
+            --roundness: .4em;
+            background-color: #0b0b0b59;
+            max-width: 100%;
+            display: grid;
+            grid-auto-columns: auto 1fr;
+            grid-auto-flow: column;
+            gap: .4em;
+            align-items: center;
+            border-left: 1px solid #ffffff21;
+            border-right: 1px solid #ffffff21;
+            padding: .2em;
+            color: whitesmoke;
+
+            &.userfirst {
+                margin-top: .2em;
+                border-radius: var(--roundness) var(--roundness) 0 0;
+                border-top: 1px solid #ffffff2c;
+                border-bottom: unset;
+            }
+
+            &.usersame:not(.userlast) {
+                border-radius: 0;
+                padding: 0 0.2em;
+                border-bottom: .1em #ffffff03 solid;
+            }
+
+            &.userlast {
+                border-radius: 0 0 var(--roundness) var(--roundness);
+                border-bottom: 1px solid #ffffff4b;
+                padding-top: 0;
+            }
+
+            &.single {
+                margin-top: .2em;
+                border-radius: var(--roundness);
+                border-top: 1px solid #ffffff2c;
+                border-bottom: 1px solid #ffffff4b;
+            }
+
+            &>.content {
+                overflow-wrap: break-word;
+                overflow: hidden;
+                text-align: left;
+            }
+
+            &:first-child {
+                margin-top: 0;
+            }
+
+            &>.username {
+                color: lightblue;
+                font-size: 0.72em;
+                font-weight: bold;
+                text-wrap: nowrap;
+                padding: 0.2em;
+                border: .05em #ffffff45 solid;
+                border-radius: .3em;
+                background-image: linear-gradient(45deg, #141414, transparent);
+            }
+
+            &:not(.userfirst):not(.single)>.username {
+                opacity: 0;
+            }
+
+            &.sys {
+                >.content {
+                    color: #ff6f6fc4;
+                    text-align: center;
+                    font-style: italic;
+                    font-size: 0.8em;
+                }
+
+                &>.username {
+                    color: #ff6f6f;
+                    background-image: linear-gradient(45deg, #ff000042, transparent);
+                }
+            }
+        }
+    }
+}

@@ -1,5 +1,8 @@
 import { io } from 'socket.io-client';
 import { html, css, zyXArray, zyxAudio } from 'zyX';
+
+import ZyXInput from 'zyX/_/zyx-Input.js';
+
 import Particles from 'zyX/_/canvas/particles.js';
 
 export const audio = new zyxAudio("/static/sounds/");
@@ -7,14 +10,16 @@ const socketio = io('/socket.io');
 const messages = new zyXArray(...data.latest.reverse());
 const { me, MAX_LEN, MSG_COUNT } = data;
 const sent = { messages: [], index: 0 };
+const emoji_charcount = 3;
 
-function systemMessage(content) { messages.push({ type: "sys", user: { name: "system" }, content: content }) }
-
+function systemMessage(content) {
+	messages.push({ type: "sys", user: { name: "system" }, frags: [{ type: "text", content }] })
+}
 socketio.on('connect', () => {
 	systemMessage("Connected to the server.")
 	socketio.emit('enter', { room: "root" }) && messages_scrollToBottom() || input.focus();
 });
-socketio.on('disconnect', () => messages.push({ type: "sys", user: { name: "system" }, content: "Disconnected from the server." }));
+socketio.on('disconnect', () => systemMessage("Disconnected from the server."))
 socketio.on('status', (data) => console.log("[socketio] status: ", data));
 socketio.on('chat', async (message) => {
 	if (message.egg) await executeEgg(message);
@@ -40,8 +45,6 @@ await css`url(/static/css.css)`;
 
 const particles = new Particles()
 
-import cursor from "./cursor.js";
-
 const UI = html`
 	${particles}
     <main this=main>
@@ -57,11 +60,9 @@ const UI = html`
 			<div class=input-area>
 				<div this=attach class="attach uwu"><span>+</span></div>
 				<div this=input_container class="input uwu">
-					<div this=virtual_input class="virtual-input">
-
+					<div this=input id=input class=contentinput contenteditable="true" 
+						zyx-keyup="${inputOnKeyup}" zyx-input="${validateInput}"> 
 					</div>
-					<input type=text this=input id=input placeholder="Enter your message" maxlength="${MAX_LEN}" autocomplete="off" 
-						zyx-keyup="${input_onkeyup}" zyx-input="${input_oninput}"/>
 				</div>
 				<div class="limit uwu"><span this=limit>0</span><span>/</span><span>${MAX_LEN}</span></div>
 				<input type=file this=fakeinput style="display:none" />
@@ -72,45 +73,118 @@ const UI = html`
 
 const { main, messages_list, input, limit, scrolldown, media_area, attach, fakeinput, input_container, virtual_input } = UI;
 
-// cursor(input_container, input)
+const zyXInputHandler = new ZyXInput({ app: UI, })
 
-const buffer = new zyXArray();
+console.log({ zyXInputHandler })
 
+zyXInputHandler.setupMomentumScroll(messages_list)
 
+import { imgToDataUrl, insertAtRange } from "./misc.js";
 
+input.addEventListener('paste', async function (e) {
+	const pastedData = e.clipboardData.items;
+	if (pastedData) for (const item of pastedData) {
+		if (item.type.startsWith('image/')) {	// Insert the resized image into the div at the cursor position
+			e.preventDefault();
+			e.stopPropagation();
+			const dataUrl = await imgToDataUrl(item.getAsFile());
+			insertImageAtRange(dataUrl);
+		}
+	}
+	validateInput()
+});
+
+function insertImageAtRange(src) {
+	const { emoji } = html`<img this=emoji src="${src}" class="custom-emoji"/>`.const()
+	insertAtRange(emoji);
+}
+
+function readInput() {
+	const nodes = [...input.childNodes];
+	const output = nodes.map(_ => {
+		if (_.nodeName === "#text") return { type: "text", content: _.textContent }
+		if (_.nodeName === "IMG") return { type: "img", src: _.src }
+	}).filter(_ => _)
+	return output;
+}
+
+function contentCharacterCount() {
+	return [...input.childNodes].reduce((acc, _) => acc + (_.nodeName === "#text" ? _.textContent.length : emoji_charcount), 0)
+}
+
+function validateInput() {
+	enforceLimit();
+	for (const node of input.childNodes) {
+		if (node.nodeName === "IMG") node.classList.add("custom-emoji");
+	}
+	limit.textContent = contentCharacterCount()
+}
+
+function enforceLimit() {
+	const childNodes = [...input.childNodes];
+	let accumulated = 0;
+	for (const node of childNodes) {
+		if (!["#text", "IMG"].includes(node.nodeName)) {
+			node.replaceWith(flattenToTextNode(node));
+		}
+	}
+	for (const node of childNodes) {
+		if (node.nodeName === "#text") {
+			accumulated += node.textContent.length;
+			if (accumulated > MAX_LEN) {
+				node.textContent = node.textContent.slice(0, MAX_LEN - accumulated);
+			}
+		} else {
+			accumulated += emoji_charcount;
+			if (accumulated > MAX_LEN) {
+				node.remove();
+				continue;
+			}
+		}
+	}
+}
+
+function flattenToTextNode(node, acc = []) {
+	if (node.nodeName === "#text") return acc.push(node.textContent);
+	if (node.nodeName === "IMG") return node;
+	for (const child of node.childNodes) flattenToTextNode(child, acc);
+	return document.createTextNode(acc.join(""));
+}
 
 particles.start()
 
 document.addEventListener('keydown', _ => !_.ctrlKey && input.focus());
 
 function messages_onScroll() { messages_nearBottom() && scrolldown.classList.remove('visible') };
-function distanceFromBottom() { return messages_list.scrollHeight - messages_list.scrollTop - messages_list.clientHeight }
-function messages_nearBottom() { return distanceFromBottom() < 100 }
+function messages_bottomDist() { return messages_list.scrollHeight - messages_list.scrollTop - messages_list.clientHeight }
+function messages_nearBottom() { return messages_bottomDist() < 100 }
 function messages_scrollToBottom() { messages_list.scrollTo({ top: messages_list.scrollHeight, behavior: 'smooth' }); }
 
-function input_onkeyup(e) {
-	if (e.key === 'Enter') send(input.value.trim());
+function inputOnKeyup(e) {
+	e.preventDefault();
+	if (e.key === 'Enter') send();
 	if (e.key === 'ArrowUp' && e.ctrlKey) {
-		input.value = sent.messages[sent.index] || "";
+		input.innerHTML = sent.messages[sent.index] || "";
 		sent.index = Math.min(sent.index + 1, sent.messages.length - 1);
 	}
 }
 
-function send(content) {
-	if (content === '') return;
-	sent.messages.unshift(content) && (sent.index = 0);
-	socketio.emit('chat', { content: content }) && (input.value = '') || (limit.textContent = 0);
+function send() {
+	const frags = readInput();
+	console.log("send({readInput()", frags)
+	if (frags === '') return;
+	sent.messages.unshift(frags) && (sent.index = 0);
+	socketio.emit('chat', { frags }) && (input.innerHTML = '') || (limit.textContent = 0);
 	messages_scrollToBottom()
 }
-
-function input_oninput() { (limit.textContent = input.value.length); }
 
 function handleOpenFile(files) {
 	for (const file of files) {
 		const reader = new FileReader();
-		reader.onload = (e) => {
+		reader.onload = async (e) => {
 			const blob = new Blob([e.target.result], { type: "application/octet-stream" });
-			mediaPreview(URL.createObjectURL(blob), file)
+			// mediaPreview(URL.createObjectURL(blob), file)
+			insertImageAtRange(await imgToDataUrl(blob))
 		}
 		reader.readAsArrayBuffer(file);
 	}
@@ -122,11 +196,20 @@ attach.addEventListener("click", _ => fakeinput.dispatchEvent(new MouseEvent("cl
 fakeinput.addEventListener("change", (e) => handleOpenFile(e.target.files))
 
 function newMessage(data, { prev, next }) {
+	// console.log("newMessage", data)
 	const [isSameUser, isLastOfUser] = [prev?.item && prev.item.user.id === data.user.id, !next || next.user.id !== data.user.id];
 	const single = !isSameUser && isLastOfUser;
+	const firstMessage = !prev.item || prev.item.user.id !== data.user.id;
 	const position_class = single ? "single" : `${isSameUser ? "usersame" : "userfirst"} ${isLastOfUser ? "userlast" : ""}`
+	const fragments = [];
+	if (typeof data.frags === "string") data.frags = JSON.parse(data.frags);
+	for (const frag of data.frags) {
+		if (frag.type === "text") fragments.push(html`<span>${frag.content}</span>`)
+		if (frag.type === "img") fragments.push(html`<img class=custom-emoji src="${frag.src}"/>`)
+	}
 	return html`<div this=msg class="message ${data?.type || "user"} ${position_class}" style="${data?.style};">
-        <div class=username style="${"color:" + data.user.color};">${data.user.name}</div><div class=content>${data.content}</div>
+        ${firstMessage && html`<div class=username style="${"color:" + data.user.color};">${data.user.name}</div>`}
+		<div class=content>${fragments}</div>
     </div>`
 }
 
@@ -137,3 +220,4 @@ function mediaPreview(data, file) {
 			x.addEventListener("click", _ => preview.remove());
 		})
 }
+

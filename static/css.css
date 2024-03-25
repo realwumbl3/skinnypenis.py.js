@@ -11,12 +11,13 @@
 }
 
 body {
-    background-color: #000000;
+    background-color: #6e6e6e;
     font-family: 'Roboto Condensed', sans-serif;
     display: grid;
     place-items: stretch;
     height: 100vh;
     overflow: hidden;
+    font-size: 1.4em;
 }
 
 main {
@@ -62,18 +63,19 @@ main {
 .media-preview {
     width: 4em;
     aspect-ratio: 1;
-    border-radius: .3em;
+    border-radius: 0.5em;
     border: 1px solid #f5f5f563;
     overflow: hidden;
     position: relative;
 
     &>a {
         position: absolute;
-        top: .1em;
-        right: .1em;
+        top: 0.3em;
+        right: 0.3em;
+        font-size: .7em;
         cursor: pointer;
         user-select: none;
-        padding: 0.25em;
+        padding: 0.35em;
         backdrop-filter: blur(0.5em) brightness(0.7);
         border-radius: 1em;
         line-height: 0.3;
@@ -150,14 +152,14 @@ main {
         position: relative;
         border-radius: 1em;
 
-
-        &>input {
+        &>.contentinput {
             padding: .4em 1em;
             background-color: transparent;
             color: #fff;
-            border-radius: 5em;
             border: unset;
             font-family: 'Roboto Condensed', sans-serif;
+            overflow-wrap: break-word;
+            overflow: hidden;
 
             &:focus {
                 outline: none;

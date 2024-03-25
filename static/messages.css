@@ -30,14 +30,15 @@
         grid-auto-flow: row;
         grid-auto-rows: max-content;
         padding: .2em;
-        border-radius: .5em;
+        border-radius: 0.3em;
         border: 1px solid #ffffff3b;
         background-color: #00000056;
         align-items: start;
         overflow-y: auto;
+        padding-right: 1em;
 
         &>.message {
-            --roundness: .4em;
+            --roundness: .3em;
             background-color: #0b0b0b59;
             max-width: 100%;
             display: grid;
@@ -56,6 +57,7 @@
                 border-top: 1px solid #ffffff2c;
                 border-bottom: unset;
             }
+
 
             &.usersame:not(.userlast) {
                 border-radius: 0;
@@ -76,9 +78,12 @@
                 border-bottom: 1px solid #ffffff4b;
             }
 
+            &:not(.userfirst):not(.single) {
+                padding-left: 1em;
+            }
+
             &>.content {
-                overflow-wrap: break-word;
-                overflow: hidden;
+                word-break: break-word;
                 text-align: left;
             }
 
@@ -115,5 +120,22 @@
                 }
             }
         }
+    }
+}
+
+.custom-emoji {
+    aspect-ratio: 1;
+    width: 1.4em;
+    vertical-align: middle;
+    object-fit: cover;
+    border-radius: 0.1em;
+    outline: 0.1em solid #ffffff3b;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    &:hover {
+        outline: 0.1em solid #ffffff;
+        transform: scale(2);
+        transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 }

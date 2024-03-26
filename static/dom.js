@@ -1,4 +1,3 @@
-
 export function imgToDataUrl(url, max_side = 256) {
     return new Promise((res, rej) => {
         const img = new Image();
@@ -23,4 +22,11 @@ export function insertAtRange(content, range) {
     range.insertNode(content);
     // set selection to the end of the inserted content
     range.setStartAfter(content);
+}
+
+export function flattenToTextNode(node, acc = []) {
+	if (node.nodeName === "#text") return acc.push(node.textContent);
+	if (node.nodeName === "IMG") return node;
+	for (const child of node.childNodes) flattenToTextNode(child, acc);
+	return document.createTextNode(acc.join(""));
 }

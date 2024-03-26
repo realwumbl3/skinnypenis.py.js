@@ -1,0 +1,70 @@
+.InputArea {
+    position: relative;
+    height: max-content;
+    grid-template-columns: auto 1fr auto;
+    display: grid;
+    grid-auto-flow: column;
+    gap: 0.5em;
+    align-items: stretch;
+    justify-content: center;
+
+    &>.attach {
+        position: relative;
+        display: grid;
+        place-items: center;
+        user-select: none;
+        cursor: pointer;
+        width: 2em;
+        padding: .1em .4em;
+        align-self: center;
+
+        &>span {
+            width: max-content;
+            font-size: 0.85em;
+        }
+    }
+
+
+    &>.Input {
+        display: grid;
+        place-items: stretch;
+        position: relative;
+        border-radius: 0 0 1em 1em;
+
+        &>.contentinput {
+            padding: .4em 1em;
+            background-color: transparent;
+            color: #fff;
+            border: unset;
+            overflow-wrap: break-word;
+            overflow: hidden;
+
+            &:focus {
+                outline: none;
+            }
+        }
+
+    }
+
+    &>.limit {
+        padding: .1em .4em;
+        position: relative;
+        display: flex;
+        gap: .15em;
+        align-items: center;
+        user-select: none;
+        cursor: pointer;
+        align-self: center;
+
+        &>span {
+            font-size: 0.7em;
+            line-height: 0.8;
+        }
+
+        &>span:nth-child(2) {
+            font-size: 0.7em;
+        }
+
+    }
+
+}

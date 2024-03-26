@@ -5,8 +5,8 @@ after=network.target
 [Service]
 User=wumbl3priv
 Group=www-data
-WorkingDirectory=/home/wumbl3priv/AiCode/Things/B
-ExecStart=/home/wumbl3priv/AiCode/Things/B/start.sh
+WorkingDirectory=/home/wumbl3priv/ChitChat/
+ExecStart=/home/wumbl3priv/ChitChat/start.sh
 Environment="PYTHONUNBUFFERED=TRUE"
 Restart=on-failure
 RestartSec=1s

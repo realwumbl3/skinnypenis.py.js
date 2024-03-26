@@ -5,6 +5,9 @@ import ZyXInput from 'zyX/_/zyx-Input.js';
 
 import Particles from 'zyX/_/Visuals/particles.js';
 
+import { imgToDataUrl, insertAtRange } from "./misc.js";
+
+
 export const audio = new zyxAudio("/static/sounds/");
 const socketio = io('/socket.io');
 const messages = new zyXArray(...data.latest.reverse());
@@ -41,6 +44,16 @@ async function executeEgg(data) {
 	await import(`/static/eastereggs/${data.egg}.js?v=${Math.round(Math.random() * 99999)}`).then(_ => _.default({ UI, data, message, messages_list, me, main, socketio }))
 }
 
+// MESSAGE SENDING
+function send() {
+	const frags = readInput();
+	// console.log("[Firefox blows pls fix] send({readInput()", frags)
+	if (frags === '') return;
+	sent.messages.unshift(frags) && (sent.index = 0);
+	socketio.emit('chat', { frags }) && (input.innerHTML = '') || (limit.textContent = 0);
+	messages_scrollToBottom()
+}
+
 await css`url(/static/css.css)`;
 
 const particles = new Particles()
@@ -71,14 +84,28 @@ const UI = html`
 	</main>
 `.appendTo(document.body)
 
+export const zyXInput = new ZyXInput({ app: UI })
+
 const { main, messages_list, input, limit, scrolldown, media_area, attach, fakeinput, input_container, virtual_input } = UI;
 
-const zyXInputHandler = new ZyXInput({ app: UI, })
+function messages_onScroll() { messages_nearBottom() && scrolldown.classList.remove('visible') };
+function messages_bottomDist() { return messages_list.scrollHeight - messages_list.scrollTop - messages_list.clientHeight }
+function messages_nearBottom() { return messages_bottomDist() < 100 }
+function messages_scrollToBottom() { messages_list.scrollTo({ top: messages_list.scrollHeight, behavior: 'smooth' }); }
+zyXInput.setupMomentumScroll(messages_list)
 
-zyXInputHandler.setupMomentumScroll(messages_list)
+// INPUT HANDLING
+const last_range = new Range();
+function updateLastRange() {
+	const selection = window.getSelection();
+	const selected_element = selection.focusNode;
+	if (!(document.activeElement === input && selected_element === input)) return;
+	last_range.setStart(selected_element, selection.focusOffset);
+}
 
-import { imgToDataUrl, insertAtRange } from "./misc.js";
-
+document.addEventListener('keydown', _ => !_.ctrlKey && input.focus());
+input.addEventListener('focus', () => updateLastRange());
+input.addEventListener('blur', () => updateLastRange());
 input.addEventListener('paste', async function (e) {
 	const pastedData = e.clipboardData.items;
 	if (pastedData) for (const item of pastedData) {
@@ -92,23 +119,6 @@ input.addEventListener('paste', async function (e) {
 	validateInput()
 });
 
-input.addEventListener('focus', () => updateLastRange());
-input.addEventListener('blur', () => updateLastRange());
-
-const last_range = new Range();
-
-function updateLastRange() {
-	const selection = window.getSelection();
-	const selected_element = selection.focusNode;
-	if (!(document.activeElement === input && selected_element === input)) return;
-	last_range.setStart(selected_element, selection.focusOffset);
-}
-
-function insertImageAtRange(src) {
-	const { emoji } = html`<img this=emoji src="${src}" class="custom-emoji"/>`.const()
-	insertAtRange(emoji, last_range);
-}
-
 function readInput() {
 	const nodes = [...input.childNodes];
 	const output = nodes.map(_ => {
@@ -116,6 +126,19 @@ function readInput() {
 		if (_.nodeName === "IMG") return { type: "img", src: _.src }
 	}).filter(_ => _)
 	return output;
+}
+
+function createEmoji(src) {
+	const { emoji } = html`<img this=emoji src="${src}" class="custom-emoji"/>`.const()
+	emoji.addEventListener('dragstart', e => {
+		e.preventDefault();
+		console.log("implement emoji drag")
+	})
+	return emoji;
+}
+
+function insertImageAtRange(src) {
+	insertAtRange(createEmoji(src), last_range);
 }
 
 function contentCharacterCount() {
@@ -161,15 +184,6 @@ function flattenToTextNode(node, acc = []) {
 	return document.createTextNode(acc.join(""));
 }
 
-particles.start()
-
-document.addEventListener('keydown', _ => !_.ctrlKey && input.focus());
-
-function messages_onScroll() { messages_nearBottom() && scrolldown.classList.remove('visible') };
-function messages_bottomDist() { return messages_list.scrollHeight - messages_list.scrollTop - messages_list.clientHeight }
-function messages_nearBottom() { return messages_bottomDist() < 100 }
-function messages_scrollToBottom() { messages_list.scrollTo({ top: messages_list.scrollHeight, behavior: 'smooth' }); }
-
 function inputOnKeyup(e) {
 	e.preventDefault();
 	if (e.key === 'Enter') send();
@@ -180,14 +194,18 @@ function inputOnKeyup(e) {
 	updateLastRange();
 }
 
-function send() {
-	const frags = readInput();
-	// console.log("[Firefox blows pls fix] send({readInput()", frags)
-	if (frags === '') return;
-	sent.messages.unshift(frags) && (sent.index = 0);
-	socketio.emit('chat', { frags }) && (input.innerHTML = '') || (limit.textContent = 0);
-	messages_scrollToBottom()
+function mediaPreview(data, file) {
+	return html`<div this=preview class=media-preview> <div class=media-preview-content><img this=img src="${data}"/></div><a this=x>x</a></div>`
+		.appendTo(media_area)
+		.pass(({ preview, img, x }) => {
+			x.addEventListener("click", _ => preview.remove());
+		})
 }
+
+main.addEventListener("dragover", (e) => e.preventDefault() || e.stopPropagation());
+main.addEventListener("drop", (e) => e.preventDefault() || e.stopPropagation() || handleOpenFile(e.dataTransfer.files));
+attach.addEventListener("click", _ => fakeinput.dispatchEvent(new MouseEvent("click")))
+fakeinput.addEventListener("change", (e) => handleOpenFile(e.target.files))
 
 function handleOpenFile(files) {
 	for (const file of files) {
@@ -201,11 +219,6 @@ function handleOpenFile(files) {
 	}
 }
 
-main.addEventListener("dragover", (e) => e.preventDefault() || e.stopPropagation());
-main.addEventListener("drop", (e) => e.preventDefault() || e.stopPropagation() || handleOpenFile(e.dataTransfer.files));
-attach.addEventListener("click", _ => fakeinput.dispatchEvent(new MouseEvent("click")))
-fakeinput.addEventListener("change", (e) => handleOpenFile(e.target.files))
-
 function newMessage(data, { prev, next }) {
 	// console.log("newMessage", data)
 	const [isSameUser, isLastOfUser] = [prev?.item && prev.item.user.id === data.user.id, !next || next.user.id !== data.user.id];
@@ -216,7 +229,7 @@ function newMessage(data, { prev, next }) {
 	if (typeof data.frags === "string") data.frags = JSON.parse(data.frags);
 	for (const frag of data.frags) {
 		if (frag.type === "text") fragments.push(html`<span>${frag.content}</span>`)
-		if (frag.type === "img") fragments.push(html`<img class=custom-emoji src="${frag.src}"/>`)
+		if (frag.type === "img") fragments.push(createEmoji(frag.src))
 	}
 	return html`<div this=msg class="message ${data?.type || "user"} ${position_class}" style="${data?.style};">
         ${firstMessage && html`<div class=username style="${"color:" + data.user.color};">${data.user.name}</div>`}
@@ -224,11 +237,4 @@ function newMessage(data, { prev, next }) {
     </div>`
 }
 
-function mediaPreview(data, file) {
-	return html`<div this=preview class=media-preview> <div class=media-preview-content><img this=img src="${data}"/></div><a this=x>x</a></div>`
-		.appendTo(media_area)
-		.pass(({ preview, img, x }) => {
-			x.addEventListener("click", _ => preview.remove());
-		})
-}
-
+particles.start()

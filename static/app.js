@@ -3,7 +3,7 @@ import { html, css, zyXArray, zyxAudio } from 'zyX';
 
 import ZyXInput from 'zyX/_/zyx-Input.js';
 
-import Particles from 'zyX/_/canvas/particles.js';
+import Particles from 'zyX/_/Visuals/particles.js';
 
 export const audio = new zyxAudio("/static/sounds/");
 const socketio = io('/socket.io');
@@ -17,7 +17,7 @@ function systemMessage(content) {
 }
 socketio.on('connect', () => {
 	systemMessage("Connected to the server.")
-	socketio.emit('enter', { room: "root" }) && messages_scrollToBottom() || input.focus();
+	socketio.emit('enter', { room: "root" }) && messages_scrollToBottom() || input.focus() || console.log("enter");
 });
 socketio.on('disconnect', () => systemMessage("Disconnected from the server."))
 socketio.on('status', (data) => console.log("[socketio] status: ", data));
@@ -61,7 +61,7 @@ const UI = html`
 				<div this=attach class="attach uwu"><span>+</span></div>
 				<div this=input_container class="input uwu">
 					<div this=input id=input class=contentinput contenteditable="true" 
-						zyx-keyup="${inputOnKeyup}" zyx-input="${validateInput}"> 
+						zyx-keyup="${inputOnKeyup}" zyx-input="${validateInput}" zyx-pointerdown="${updateLastRange}"> 
 					</div>
 				</div>
 				<div class="limit uwu"><span this=limit>0</span><span>/</span><span>${MAX_LEN}</span></div>
@@ -74,8 +74,6 @@ const UI = html`
 const { main, messages_list, input, limit, scrolldown, media_area, attach, fakeinput, input_container, virtual_input } = UI;
 
 const zyXInputHandler = new ZyXInput({ app: UI, })
-
-console.log({ zyXInputHandler })
 
 zyXInputHandler.setupMomentumScroll(messages_list)
 
@@ -94,9 +92,21 @@ input.addEventListener('paste', async function (e) {
 	validateInput()
 });
 
+input.addEventListener('focus', () => updateLastRange());
+input.addEventListener('blur', () => updateLastRange());
+
+const last_range = new Range();
+
+function updateLastRange() {
+	const selection = window.getSelection();
+	const selected_element = selection.focusNode;
+	if (!(document.activeElement === input && selected_element === input)) return;
+	last_range.setStart(selected_element, selection.focusOffset);
+}
+
 function insertImageAtRange(src) {
 	const { emoji } = html`<img this=emoji src="${src}" class="custom-emoji"/>`.const()
-	insertAtRange(emoji);
+	insertAtRange(emoji, last_range);
 }
 
 function readInput() {
@@ -167,11 +177,12 @@ function inputOnKeyup(e) {
 		input.innerHTML = sent.messages[sent.index] || "";
 		sent.index = Math.min(sent.index + 1, sent.messages.length - 1);
 	}
+	updateLastRange();
 }
 
 function send() {
 	const frags = readInput();
-	console.log("send({readInput()", frags)
+	// console.log("[Firefox blows pls fix] send({readInput()", frags)
 	if (frags === '') return;
 	sent.messages.unshift(frags) && (sent.index = 0);
 	socketio.emit('chat', { frags }) && (input.innerHTML = '') || (limit.textContent = 0);

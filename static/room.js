@@ -103,8 +103,9 @@ function newMessage(data, { prev, next }) {
     }
     return html`<div this=msg class="message ${data?.type || "user"} ${isMe && "me"} ${position_class}" style="${data?.style};">
         ${firstMessage && html`
-            <div class=username style="${"color:" + data.user.color};">${data.user.name}
+            <div class=username style="${"color:" + data.user.color};">
                 ${isMe && html`<div class=me-indicator></div>`}
+                ${data.user.name}
             </div>`
         }
 		<div class=content>${fragments}</div>

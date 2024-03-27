@@ -9,6 +9,8 @@
         position: relative;
         display: grid;
         place-items: stretch;
+        grid-auto-flow: column;
+        gap: .2em;
     }
 }
 
@@ -112,6 +114,7 @@
                 }
 
                 &>.username {
+                    position: relative;
                     color: lightblue;
                     font-size: 0.72em;
                     font-weight: bold;
@@ -120,6 +123,20 @@
                     border: .05em #ffffff45 solid;
                     border-radius: .3em;
                     background-image: linear-gradient(45deg, #141414, transparent);
+                    display: grid;
+                    place-items: center;
+                    grid-auto-columns: auto;
+                    grid-auto-flow: column;
+                    gap: .2em;
+
+                    &>.me-indicator {
+                        position: relative;
+                        width: 0.1em;
+                        height: 100%;
+                        background-color: white;
+                        border-radius: 1em;
+                    }
+
                 }
 
                 &:not(.userfirst):not(.single)>.username {

@@ -6,7 +6,7 @@ import zyX, { html, css, zyXArray, zyxAudio } from 'zyX';
 import { audio } from "../app.js"
 
 export default function secret({
-    data, message, messages_list, me, socketio, main
+    data, message, messages_list, me, socketio, tab
 }) {
 
     //nudge the window like windows live messenger
@@ -16,12 +16,12 @@ export default function secret({
     const interval = setInterval(() => {
         nudge.x = Math.random() * 10 - 5;
         nudge.y = Math.random() * 10 - 5;
-        main.style.transform = `translate(${nudge.x}px, ${nudge.y}px)`;
+        tab.tab.style.transform = `translate(${nudge.x}px, ${nudge.y}px)`;
     }, 50);
 
     setTimeout(() => {
         clearInterval(interval);
-        main.style.transform = `translate(0px, 0px)`;
+        tab.tab.style.transform = ""
     }, 1000);
 
 }

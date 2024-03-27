@@ -3,7 +3,7 @@ import zyX, { html, css, zyXArray, zyxAudio } from 'zyX';
 import { audio } from "../app.js"
 
 export default async function secret({
-    data, message, me, main, UI
+    data, message, me, main, tab
 }) {
     const { style } = html`
         <style this=style>
@@ -49,21 +49,21 @@ export default async function secret({
     `.const();
 
     (async () => {
-        UI.messages_list.classList.add('kicked-forward');
+        tab.messages_container.classList.add('kicked-forward');
         const { video } = html`<video this=video autoplay src="/static/videos/fbi-open-up.mp4" id="fbi-video"></video>`.const()
-        main.before(video);
+        tab.messages_container.before(video);
         await new Promise(r => video.addEventListener('canplay', r));
         console.log("video started")
         video.volume = 0.3;
-        main.before(style);
+        tab.messages_container.before(style);
         await new Promise(r => video.addEventListener('ended', r));
-        UI.messages_list.classList.remove('kicked-forward');
-        UI.messages_list.classList.add('reset-anim');
+        tab.messages_container.classList.remove('kicked-forward');
+        tab.messages_container.classList.add('reset-anim');
         await new Promise(r => setTimeout(r, 200));
         video.remove();
         style.remove();
         console.log("video ended")
-        UI.messages_list.classList.remove('reset-anim');
+        tab.messages_container.classList.remove('reset-anim');
     })()
 }
 

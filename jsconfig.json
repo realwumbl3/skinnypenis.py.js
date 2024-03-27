@@ -2,6 +2,7 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "ES6",
+        "moduleResolution": "classic",
         "paths": {
             "socket.io-client": [
                 "/static/dependencies/socket.io.esm.min.js"

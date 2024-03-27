@@ -2,7 +2,7 @@ import zyX, { html, getImageBlob } from 'zyX';
 import { audio } from "../app.js"
 
 export default async function secret({
-    data, message, messages_list, me, socketio, main
+    data, message, messages_list, me, socketio, tab
 }) {
     const flashbang_png = URL.createObjectURL(await getImageBlob("/static/pngs/flashbang.png"));
     await audio.addSound("flash-bounce.mp3");
@@ -57,7 +57,7 @@ export default async function secret({
                 }
             </style>
         </div>
-    `.appendTo(main);
+    `.appendTo(tab.tab);
 
     audio.play({ name: "think-fast-chucklenuts.mp3" });
 
@@ -66,7 +66,7 @@ export default async function secret({
         flashbang.style.animation = "flashbang-bounce 0.3s ease-in-out 2 alternate forwards";
         flash.style.animation = "flash 8s 300ms ease-in-out forwards";
         audio.play({ name: "flash-bounce.mp3" });
-        zyX(data).delayChain("flash")
+        zyX(this).delayChain("flash")
             .then(() => flashbang.remove(), 500)
             .then(() => egg.remove(), 10000)
     });
